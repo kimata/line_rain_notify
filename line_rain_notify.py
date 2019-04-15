@@ -14,14 +14,16 @@ INFLUXDB_ADDR = '192.168.2.20'
 INFLUXDB_PORT = 8086
 INFLUXDB_DB = 'sensor'
 
+# NOTE: センサからは最長で 30 分間間隔でデータが登録されるので，
+# 余裕を見て過去 1 時間分を取得
 INFLUXDB_QUERY = """
-SELECT MEAN("touchpad") FROM "sensor.esp32" WHERE ("hostname" = \'ESP32-raindrop\') AND time >= now() - 1h GROUP BY time(2m) FILL(previous) ORDER by time desc
+SELECT MEAN("touchpad") FROM "sensor.esp32" WHERE ("hostname" = \'ESP32-raindrop\') AND time >= now() - 1h GROUP BY time(2m) FILL(previous) ORDER by time asc
 """
 
 WET_THRESHOLD = 380
 
 NOTIFY_FLAG_FILE = '.notify'
-NOTIFY_INTERVAL = 3600
+NOTIFY_INTERVAL = 7200
 
 def notify_flag_file():
     return os.path.join(os.path.dirname(__file__), NOTIFY_FLAG_FILE)
@@ -43,12 +45,13 @@ def check_soil_wet():
     thresh_above = 0
 
     for val in status_list:
-        if (val is None):
+        if (val is None): # NOTE: データが登録されていない期間は None
             continue
         elif (val < WET_THRESHOLD):
             thresh_below += 1
         elif (val > WET_THRESHOLD):
             thresh_above += 1
+            thresh_below = 0 # NOTE: reset count
 
     print('(below, above) = ({}, {})'.format(thresh_below, thresh_above))
             
@@ -60,6 +63,6 @@ def check_already_notified():
 
     return elapsed_time > NOTIFY_INTERVAL
 
-    
+
 if check_soil_wet() and check_already_notified():
     line_notify('雨が降り始めました．')
