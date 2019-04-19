@@ -7,7 +7,9 @@ from datetime import datetime
 from config import LINE_NOTIFY_TOKEN
 from pathlib import Path
 import os
-    
+import urllib.request
+
+RADAR_MAP_URL_BASE = 'http://www.jma.go.jp/jp/radnowc/imgs/radar/211/'
 LINE_NOTIFY_API_ENDPOINT = 'https://notify-api.line.me/api/notify'
 
 INFLUXDB_ADDR = '192.168.2.20'
@@ -25,13 +27,22 @@ WET_THRESHOLD = 380
 NOTIFY_FLAG_FILE = '.notify'
 NOTIFY_INTERVAL = 7200
 
+def radar_map_url():
+    return RADAR_MAP_URL_BASE + \
+        datetime.today().strftime('%Y%m%d%H') \
+        + '{:02d}'.format(datetime.today().minute // 5 * 5) \
+        + '-00.png'
+
 def notify_flag_file():
     return os.path.join(os.path.dirname(__file__), NOTIFY_FLAG_FILE)
 
 def line_notify(message):
     payload = { 'message': message }
     headers = { 'Authorization': 'Bearer ' + LINE_NOTIFY_TOKEN }
-    line_notify = requests.post(LINE_NOTIFY_API_ENDPOINT, data=payload, headers=headers)
+    files = { 'imageFile': urllib.request.urlopen(radar_map_url()) }
+    line_notify = requests.post(LINE_NOTIFY_API_ENDPOINT,
+                                data=payload, headers=headers, files=files)
+
     Path(notify_flag_file()).touch()
 
 def check_soil_wet():
@@ -67,4 +78,4 @@ def check_already_notified():
 
 
 if check_soil_wet() and check_already_notified():
-    line_notify('雨が降り始めました！')
+    line_notify('\U00002614' + '️雨が降り始めました！')
