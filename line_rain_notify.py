@@ -39,7 +39,12 @@ def notify_flag_file():
 def line_notify(message):
     payload = { 'message': message }
     headers = { 'Authorization': 'Bearer ' + LINE_NOTIFY_TOKEN }
-    files = { 'imageFile': urllib.request.urlopen(radar_map_url()) }
+    files = { }
+    try:
+        files = { 'imageFile': urllib.request.urlopen(radar_map_url()) }
+    except:
+        pass
+
     line_notify = requests.post(LINE_NOTIFY_API_ENDPOINT,
                                 data=payload, headers=headers, files=files)
 
