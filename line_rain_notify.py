@@ -53,8 +53,10 @@ def check_soil_wet():
             thresh_above += 1
             thresh_below = 0 # NOTE: reset count
 
-    print('(below, above) = ({}, {})'.format(thresh_below, thresh_above))
-            
+    # DEBUG
+    # print('{} (below, above) = ({}, {})'.format(datetime.now(), thresh_below, thresh_above))
+    # print(status_list)
+
     return (thresh_below > 0) and (thresh_above > 0)
 
 def check_already_notified():
@@ -65,4 +67,4 @@ def check_already_notified():
 
 
 if check_soil_wet() and check_already_notified():
-    line_notify('雨が降り始めました．')
+    line_notify('雨が降り始めました！')
