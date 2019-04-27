@@ -22,7 +22,7 @@ INFLUXDB_QUERY = """
 SELECT MEAN("touchpad") FROM "sensor.esp32" WHERE ("hostname" = \'ESP32-raindrop\') AND time >= now() - 1h GROUP BY time(2m) FILL(previous) ORDER by time asc
 """
 
-WET_THRESHOLD = 380
+WET_THRESHOLD = 370
 
 NOTIFY_FLAG_FILE = '.notify'
 NOTIFY_INTERVAL = 7200
@@ -36,17 +36,18 @@ def radar_map_url():
 def notify_flag_file():
     return os.path.join(os.path.dirname(__file__), NOTIFY_FLAG_FILE)
 
-def line_notify(message):
+def line_notify(message, image):
     payload = { 'message': message }
     headers = { 'Authorization': 'Bearer ' + LINE_NOTIFY_TOKEN }
     files = { }
+
     try:
-        files = { 'imageFile': urllib.request.urlopen(radar_map_url()) }
+        files = { 'imageFile': image }
     except:
         pass
 
-    line_notify = requests.post(LINE_NOTIFY_API_ENDPOINT,
-                                data=payload, headers=headers, files=files)
+    res = requests.post(LINE_NOTIFY_API_ENDPOINT,
+                        data=payload, headers=headers, files=files)
 
     Path(notify_flag_file()).touch()
 
@@ -83,4 +84,5 @@ def check_already_notified():
 
 
 if check_soil_wet() and check_already_notified():
-    line_notify('\U00002614' + '️雨が降り始めました！')
+    line_notify('\U00002614' + '️雨が降り始めました！',
+                urllib.request.urlopen(radar_map_url()))
